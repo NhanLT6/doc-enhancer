@@ -1,0 +1,44 @@
+{
+  "name": "doc-enhancer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AI-powered documentation enhancement tool",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.19.0",
+  "devDependencies": {
+    "@biomejs/biome": "2.3.8",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "postcss": "^8.5.6",
+    "postcss-preset-mantine": "^1.18.0",
+    "postcss-simple-vars": "^7.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.6"
+  },
+  "dependencies": {
+    "@mantine/core": "^8.3.9",
+    "@mantine/form": "^8.3.9",
+    "@mantine/hooks": "^8.3.9",
+    "@mantine/notifications": "^8.3.9",
+    "@tabler/icons-react": "^3.35.0",
+    "diff": "^8.0.2",
+    "react": "^19.2.1",
+    "react-diff-viewer-continued": "^3.4.0",
+    "react-dom": "^19.2.1",
+    "react-markdown": "^10.1.0",
+    "turndown": "^7.2.2",
+    "zustand": "^5.0.9"
+  }
+}
