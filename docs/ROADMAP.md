@@ -1,4 +1,4 @@
-# Doc Enhancer - Unified Roadmap
+# Doc Enhancer - Product Roadmap
 
 ## Project Overview
 
@@ -14,329 +14,149 @@
 
 ### Frontend
 - **Framework:** Vite + React 18 + TypeScript
-- **UI Library:** Mantine v7 (comprehensive component library)
-- **State Management:** Zustand (lightweight)
-- **Diff Viewer:** react-diff-viewer-continued
+- **UI Library:** Mantine v7
+- **State Management:** Zustand
 - **Markdown:** turndown (HTML→MD) + react-markdown (preview)
-- **Linting/Formatting:** Biome (replaces ESLint + Prettier)
+- **Diff Viewer:** react-diff-viewer-continued
+- **Linting/Formatting:** Biome
 - **Icons:** @tabler/icons-react
 
-### Backend (Minimal for MVP)
-- **Platform:** Vercel Functions (2 thin proxy endpoints)
+### Backend
+- **Platform:** Vercel Functions (2 proxy endpoints)
 - **Storage:** localStorage (MVP) → Supabase PostgreSQL (Phase 2)
 - **AI:** Google Gemini 2.0 Flash (free tier)
 
 ### APIs
-- **Confluence REST API** (read changes)
+- **Confluence REST API** (read content)
 - **Gemini API** (AI enhancements)
-- **Notion API** (Phase 2 - auto-push)
+- **Notion API** (Phase 3 - auto-push)
 
 ---
 
-## MVP Features (Phase 1: 4-5 Days)
+## Phase 1: MVP (4-5 Days) 🎯
 
-### ✅ What's Included
-- Document management (add, list, delete)
-- Manual Confluence content fetch (on-demand)
-- HTML → Markdown conversion
-- Change detection with diff viewer
-- 2-column enhancement UI
-- AI-powered content enhancement
-- Download enhanced .md files
-- Enhancement history in localStorage
+**Goal:** Launch working product to validate idea with users
 
-### ❌ What's Excluded (Move to Later Phases)
-- Database (use localStorage)
-- Notion API integration (manual download)
-- Background polling (on-demand fetch)
-- Version tracking (just latest)
-- Multi-user collaboration
-- Complex rollback
+### Features
 
----
-
-## Implementation Timeline
-
-### **Day 1: Foundation** ✅ COMPLETED
-- [x] Initialize Vite + React + TypeScript project
-- [x] Install dependencies (Mantine, Zustand, markdown tools, diff viewer)
-- [x] Setup PostCSS for Mantine
-- [x] Setup Biome configuration
-- [x] Create project folder structure
-- [x] Setup Mantine provider and styles
-- [x] Create environment variables template
-- [x] Build Enhancement Workflow UI with mock data
-- [x] Verify project runs successfully
-
-**Deliverable:** Project runs, Enhancement UI works with mock data ✅
-
----
-
-### **Day 1-2: Core Helpers & Storage**
-- [ ] Create `src/lib/storage.ts` - localStorage wrapper
-  - Document CRUD operations
-  - Enhancement history storage
-  - Export/import data functionality
-- [ ] Create `src/lib/markdown.ts` - Markdown helpers
-  - HTML to Markdown conversion (turndown)
-  - Download .md file function
-- [ ] Create `src/lib/api-client.ts` - API wrappers
-  - Fetch from Confluence
-  - Enhance with Gemini
-- [ ] Create `src/store/documentStore.ts` - Zustand store
-  - Documents state
-  - Current document state
-  - Actions
-
-**Deliverable:** Core utilities ready, can store/retrieve data
-
----
-
-### **Day 2: Backend Functions**
-- [ ] Create `api/confluence-fetch.ts` - Vercel function
-  - Extract page ID from URL
-  - Fetch from Confluence API
-  - Return HTML content + metadata
-- [ ] Create `api/enhance-content.ts` - Vercel function
-  - Forward to Gemini API
-  - Return enhanced markdown
-- [ ] Setup environment variables
-  - CONFLUENCE_TOKEN
-  - CONFLUENCE_BASE_URL
-  - GEMINI_API_KEY
-- [ ] Test API endpoints locally
-
-**Deliverable:** Both API endpoints work
-
----
-
-### **Day 2-3: Dashboard & Document Management**
-- [ ] Create `src/pages/Dashboard.tsx`
-  - List all documents
-  - Add document form (modal)
-  - Delete document
-  - Last updated time
-- [ ] Create `src/components/dashboard/DocumentCard.tsx`
-  - Document info display
-  - Action buttons
-  - Status badges
-- [ ] Integrate with localStorage
+**Document Management**
+- [x] Add documents (name + Confluence URL)
+- [ ] List all documents
+- [ ] Delete documents
 - [ ] Auto-fetch content when document added
-- [ ] Convert HTML → Markdown on fetch
+
+**Content Fetching**
+- [x] Vercel function to fetch from Confluence
+- [ ] Extract page ID from URL
+- [ ] Convert HTML → Markdown (turndown)
+- [ ] Store in localStorage
+- [ ] Manual refresh (on-demand, no polling)
+
+**Change Detection**
+- [ ] Compare stored content vs latest fetch
+- [ ] Side-by-side diff viewer (react-diff-viewer-continued)
+- [ ] Highlight what changed
+- [ ] "No changes" state
+- [ ] "Proceed to Enhance" button
+
+**Enhancement Workflow**
+- [x] 2-column layout (source | enhanced)
+- [x] Source panel with instruction textarea
+- [x] Preview panel with markdown rendering
+- [x] "Generate Enhancement" button with loading state
+- [ ] Connect to real Gemini API
+- [x] Download enhanced .md file
+- [ ] Store enhancement in history
+
+**Enhancement History**
+- [ ] View past enhancements per document
+- [ ] Show timestamp and instructions used
+- [ ] Reuse previous instructions
 - [ ] Store in localStorage
 
-**Deliverable:** Can add/manage documents, see fetched content
+**UI/UX Polish**
+- [x] Professional Mantine components
+- [x] Loading states with spinners
+- [x] Success/error notifications
+- [x] Empty states
+- [ ] Responsive design (mobile-friendly)
+- [ ] Confirmation dialogs
 
----
-
-### **Day 3: Change Detection & Diff Viewer**
-- [ ] Create `src/pages/CheckChanges.tsx`
-  - Fetch latest from Confluence
-  - Compare with stored content
-  - Show diff if changed
-  - "No changes" state
-- [ ] Create `src/components/changes/DiffViewer.tsx`
-  - Integrate react-diff-viewer-continued
-  - Side-by-side view
-  - Styling
-- [ ] Add "Proceed to Enhance" button
-- [ ] Store comparison state
-
-**Deliverable:** Can detect and view changes with professional diff
-
----
-
-### **Day 4: Connect Real Enhancement Workflow**
-- [ ] Update `src/pages/EnhanceDocument.tsx`
-  - Load real document data
-  - Pass to EnhancementLayout
-- [ ] Connect SourcePanel to real API
-  - Call `/api/enhance-content`
-  - Handle loading states
-  - Handle errors
-- [ ] Update PreviewPanel
-  - Show real enhanced content
-  - Proper error states
-- [ ] Add navigation between pages
-
-**Deliverable:** Full enhancement workflow works end-to-end
-
----
-
-### **Day 4-5: Polish & History**
-- [ ] Add enhancement history view
-  - List past enhancements per document
-  - Show timestamp
-  - Preview previous versions
-- [ ] Add "Reuse Instructions" feature
-- [ ] Improve loading states everywhere
-- [ ] Add error handling with notifications
-- [ ] Add empty states for all views
-- [ ] Improve responsive design
-- [ ] Add confirmation dialogs
-- [ ] Test entire flow multiple times
-
-**Deliverable:** Polished, user-friendly MVP
-
----
-
-### **Day 5-6: Deploy**
+**Deployment**
 - [ ] Setup Vercel project
-- [ ] Configure environment variables in Vercel
-- [ ] Test API endpoints on Vercel
-- [ ] Deploy frontend to Vercel
+- [ ] Configure environment variables
+- [ ] Deploy frontend + API endpoints
 - [ ] Test on production URL
-- [ ] Fix any deployment issues
-- [ ] Share with initial users
 
-**Deliverable:** App is live! 🚀
+### Implementation Tasks
+
+**Setup** ✅ COMPLETED
+- [x] Initialize Vite + React + TypeScript
+- [x] Install dependencies
+- [x] Setup Mantine + PostCSS
+- [x] Setup Biome
+- [x] Create folder structure
+- [x] Environment variables template
+- [x] Build Enhancement UI with mock data
+
+**Core Helpers** 🚧 IN PROGRESS
+- [ ] `src/lib/storage.ts` - localStorage wrapper (CRUD operations)
+- [ ] `src/lib/markdown.ts` - HTML→MD conversion, download function
+- [ ] `src/lib/api-client.ts` - API call wrappers
+- [ ] `src/store/documentStore.ts` - Zustand store
+
+**Backend API**
+- [ ] `api/confluence-fetch.ts` - Fetch from Confluence
+- [ ] `api/enhance-content.ts` - Call Gemini API
+
+**Pages & Components**
+- [x] `EnhancementLayout.tsx` - 2-column layout
+- [x] `SourcePanel.tsx` - Left panel
+- [x] `PreviewPanel.tsx` - Right panel with markdown
+- [ ] `Dashboard.tsx` - List documents
+- [ ] `DocumentCard.tsx` - Document item
+- [ ] `CheckChanges.tsx` - Diff viewer page
+- [ ] `DiffViewer.tsx` - Diff component
+
+**Integration**
+- [ ] Connect Dashboard to localStorage
+- [ ] Connect Enhancement to real API
+- [ ] Navigation between pages
+- [ ] Error handling throughout
+
+### Success Criteria
+
+✅ **MVP is complete when:**
+- Can add/manage documents
+- Can fetch from Confluence
+- Can detect changes with diff view
+- Can enhance with AI (real API)
+- Can download enhanced .md files
+- Enhancement history works
+- Deployed and accessible
+- 3-5 beta users testing successfully
 
 ---
 
-## Phase 2: Database & Sync (1-2 Weeks)
+## Phase 2: Database & Persistence (1-2 Weeks)
 
-### Goal: Multi-device sync and better reliability
+**Goal:** Multi-device sync and better reliability
 
+### Features
 - [ ] Setup Supabase project
-- [ ] Create database schema (3 tables)
-  - documents
-  - pending_updates
-  - enhancement_history
+- [ ] Create database schema (documents, pending_updates, enhancement_history)
 - [ ] Setup Drizzle ORM
 - [ ] Run migrations
 - [ ] Create migration script (localStorage → Supabase)
 - [ ] Update storage layer (keep same interface)
-- [ ] Add authentication (optional)
-- [ ] Test multi-device sync
+- [ ] Add user authentication (Supabase Auth)
+- [ ] Multi-device sync
+- [ ] Better data reliability and backup
 
-**Deliverable:** Data persists across devices
+### Database Schema
 
----
-
-## Phase 3: Notion Integration (1-2 Days)
-
-### Goal: Auto-push to Notion instead of manual download
-
-- [ ] Add Notion API client (`src/lib/api/notion.ts`)
-- [ ] Create `/api/apply-to-notion` endpoint
-- [ ] Parse Markdown → Notion blocks
-- [ ] Update Notion page via API
-- [ ] Append change log to Notion
-- [ ] Add "Push to Notion" button (alongside download)
-- [ ] Store Notion page IDs in database
-- [ ] Handle Notion API errors
-
-**Deliverable:** Can auto-push enhanced docs to Notion
-
----
-
-## Phase 4: Version Tracking (2-3 Days)
-
-### Goal: Compare versions, see full history
-
-- [ ] Store multiple versions per document
-- [ ] Add version selector UI
-- [ ] Show diff between any two versions
-- [ ] Add rollback capability
-- [ ] Version timeline view
-- [ ] Tag important versions
-- [ ] Export version history
-
-**Deliverable:** Full version control for documents
-
----
-
-## Phase 5: Advanced Features (2-4 Weeks)
-
-### Background Monitoring
-- [ ] Add TanStack Query with refetchInterval
-- [ ] Background polling for changes
-- [ ] Desktop notifications
-- [ ] Schedule checks (cron jobs)
-
-### Style Guide Management
-- [ ] Create style guide editor UI
-- [ ] Store organization style guides
-- [ ] Apply style guide to enhancements
-- [ ] Multiple style guide templates
-
-### Collaboration Features
-- [ ] Multi-user support
-- [ ] Comment threads on changes
-- [ ] Text selection + inline comments
-- [ ] Approval workflows
-- [ ] User roles (viewer, editor, admin)
-
-### Advanced Enhancement
-- [ ] Partial apply (select specific sections)
-- [ ] AI confidence scoring
-- [ ] Template system for common patterns
-- [ ] Batch processing (multiple docs)
-- [ ] Custom AI prompts
-
-### Integrations
-- [ ] Slack notifications on changes
-- [ ] Microsoft Teams integration
-- [ ] Jira ticket creation
-- [ ] GitHub sync for docs
-- [ ] Linear integration
-
-### Analytics
-- [ ] Usage dashboard
-- [ ] Enhancement metrics
-- [ ] Document activity tracking
-- [ ] Popular documents
-- [ ] AI enhancement quality metrics
-
----
-
-## Architecture Evolution
-
-### Current (MVP)
-```
-Frontend (React + Zustand)
-  ↓
-localStorage (data)
-  ↓
-Vercel Functions (2 proxies)
-  ↓
-External APIs (Confluence + Gemini)
-  ↓
-Download .md file
-```
-
-### Phase 2 (Database)
-```
-Frontend (React + Zustand)
-  ↓
-Supabase PostgreSQL + Drizzle ORM
-  ↓
-Vercel Functions (3-4 endpoints)
-  ↓
-External APIs (Confluence + Gemini)
-  ↓
-Download .md file
-```
-
-### Phase 3+ (Full Stack)
-```
-Frontend (React + Zustand + TanStack Query)
-  ↓
-Supabase (PostgreSQL + Auth + Realtime)
-  ↓
-Vercel/Cloudflare Functions (6-8 endpoints)
-  ↓
-External APIs (Confluence + Notion + Gemini + Slack)
-  ↓
-Multi-output (Notion push + Download + GitHub)
-```
-
----
-
-## Database Schema (Phase 2+)
-
-### documents
 ```sql
+-- documents
 CREATE TABLE documents (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -346,10 +166,19 @@ CREATE TABLE documents (
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
-```
 
-### pending_updates
-```sql
+-- enhancement_history
+CREATE TABLE enhancement_history (
+  id SERIAL PRIMARY KEY,
+  document_id INTEGER REFERENCES documents(id),
+  version INTEGER,
+  enhanced_content TEXT,
+  original_content TEXT,
+  instructions TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- pending_updates
 CREATE TABLE pending_updates (
   id SERIAL PRIMARY KEY,
   document_id INTEGER REFERENCES documents(id),
@@ -362,87 +191,188 @@ CREATE TABLE pending_updates (
 );
 ```
 
-### enhancement_history
-```sql
-CREATE TABLE enhancement_history (
-  id SERIAL PRIMARY KEY,
-  document_id INTEGER REFERENCES documents(id),
-  version INTEGER,
-  enhanced_content TEXT,
-  changes_summary TEXT,
-  instructions TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
+---
+
+## Phase 3: Notion Integration (1-2 Weeks)
+
+**Goal:** Auto-push to Notion instead of manual download
+
+### Features
+- [ ] Add Notion API client
+- [ ] Create `/api/apply-to-notion` endpoint
+- [ ] Parse Markdown → Notion blocks
+- [ ] Update Notion page via API
+- [ ] Append change log to Notion
+- [ ] Add "Push to Notion" button (alongside download)
+- [ ] Store Notion page IDs in database
+- [ ] Handle Notion API errors gracefully
+- [ ] Retry logic for failed pushes
 
 ---
 
-## Success Criteria
+## Phase 4: Version Tracking & History (2-3 Weeks)
 
-### MVP Complete When:
-- ✅ Can add/manage documents
-- ✅ Can fetch from Confluence
-- ✅ Can detect changes with diff view
-- ✅ Can enhance with AI
-- ✅ Can download enhanced .md files
-- ✅ Enhancement history works
-- ✅ Deployed and accessible
-- ✅ 3-5 beta users testing successfully
+**Goal:** Full version control for documents
 
-### Phase 2 Complete When:
-- ✅ Data syncs across devices
-- ✅ Database backup/restore works
-- ✅ Migration from localStorage successful
-- ✅ Performance is good with 100+ documents
+### Features
+- [ ] Store multiple versions per document
+- [ ] Version selector UI (dropdown/timeline)
+- [ ] Show diff between any two versions
+- [ ] Rollback to previous version
+- [ ] Version timeline visualization
+- [ ] Tag important versions
+- [ ] Export full version history
+- [ ] Compare versions side-by-side
+- [ ] Version metadata (who, when, why)
 
-### Phase 3 Complete When:
-- ✅ Can auto-push to Notion
-- ✅ Notion formatting looks good
-- ✅ Change logs appear correctly
-- ✅ Error handling is robust
+---
+
+## Phase 5: Advanced Enhancement (2-3 Weeks)
+
+**Goal:** More powerful AI enhancements
+
+### Features
+- [ ] Style guide management
+  - Create/edit style guides
+  - Organization-wide templates
+  - Apply style guide to enhancements
+- [ ] Partial enhancement
+  - Select specific sections to enhance
+  - Paragraph-level control
+- [ ] AI confidence scoring
+  - Show confidence per section
+  - Flag low-confidence suggestions
+- [ ] Custom AI prompts
+  - Save prompt templates
+  - Share prompts across team
+- [ ] Batch processing
+  - Enhance multiple documents
+  - Queue system
+- [ ] A/B testing enhancements
+  - Generate multiple versions
+  - Compare approaches
+
+---
+
+## Phase 6: Collaboration & Enterprise (3-4 Weeks)
+
+**Goal:** Team collaboration and enterprise features
+
+### Features
+
+**Multi-user Collaboration**
+- [ ] Team workspaces
+- [ ] User roles (viewer, editor, admin)
+- [ ] Comment threads on changes
+- [ ] Text selection + inline comments
+- [ ] Approval workflows
+- [ ] Activity feed per document
+
+**Integrations**
+- [ ] Slack notifications on changes
+- [ ] Microsoft Teams integration
+- [ ] Jira ticket creation
+- [ ] GitHub sync for docs-as-code
+- [ ] Linear integration
+- [ ] Webhook support
+
+**Background Monitoring**
+- [ ] Scheduled checks (cron jobs)
+- [ ] Background polling with TanStack Query
+- [ ] Desktop notifications
+- [ ] Email digests
+- [ ] Change summaries
+
+**Analytics Dashboard**
+- [ ] Usage metrics
+- [ ] Enhancement quality scores
+- [ ] Document activity tracking
+- [ ] Popular documents
+- [ ] User activity
+- [ ] API usage stats
+
+**Enterprise Features**
+- [ ] SSO / SAML authentication
+- [ ] Audit logs
+- [ ] Custom branding
+- [ ] Data export/import
+- [ ] Compliance features (GDPR, SOC2)
+- [ ] Advanced permissions
+
+---
+
+## Architecture Evolution
+
+### Current: MVP (Phase 1)
+```
+Frontend (React + Zustand)
+  ↓
+localStorage
+  ↓
+Vercel Functions (2 proxies)
+  ↓
+Confluence + Gemini APIs
+  ↓
+Download .md
+```
+
+### Phase 2: Database
+```
+Frontend (React + Zustand)
+  ↓
+Supabase PostgreSQL + Drizzle
+  ↓
+Vercel Functions (4 endpoints)
+  ↓
+Confluence + Gemini APIs
+  ↓
+Download .md
+```
+
+### Phase 3+: Full Stack
+```
+Frontend (React + Zustand + TanStack Query)
+  ↓
+Supabase (PostgreSQL + Auth + Realtime)
+  ↓
+Vercel/Cloudflare Functions
+  ↓
+External APIs (Confluence + Notion + Gemini + Slack)
+  ↓
+Multi-output (Notion + Download + GitHub)
+```
 
 ---
 
 ## Environment Variables
 
 ```env
-# MVP (Phase 1)
-CONFLUENCE_TOKEN=your-confluence-token
-CONFLUENCE_BASE_URL=https://your-domain.atlassian.net
-GEMINI_API_KEY=your-gemini-api-key
+# Phase 1 (MVP)
+CONFLUENCE_TOKEN=your-token
+CONFLUENCE_BASE_URL=https://domain.atlassian.net
+GEMINI_API_KEY=your-key
 
 # Phase 2 (Database)
-DATABASE_URL=postgresql://user:password@host:5432/db
+DATABASE_URL=postgresql://...
 SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-key
+SUPABASE_ANON_KEY=your-key
+SUPABASE_SERVICE_ROLE_KEY=your-key
 
 # Phase 3 (Notion)
 NOTION_TOKEN=secret_xxx
 
-# Phase 5 (Advanced)
+# Phase 6 (Integrations)
 SLACK_WEBHOOK_URL=https://hooks.slack.com/...
 GITHUB_TOKEN=ghp_xxx
+TEAMS_WEBHOOK_URL=https://...
 ```
-
----
-
-## Key Decisions
-
-| Decision | MVP Choice | Future Option | Reasoning |
-|----------|------------|---------------|-----------|
-| **Storage** | localStorage | Supabase PostgreSQL | Launch 2-3 days faster |
-| **Notion** | Manual download | Auto-push API | Remove integration complexity |
-| **Polling** | On-demand fetch | Background polling | Simpler, user controls |
-| **Versions** | Latest only | Full tracking | Can add later if needed |
-| **Auth** | None | Supabase Auth | Single user first |
-| **Backend** | Vercel Functions | Cloudflare Workers | Easy to migrate later |
 
 ---
 
 ## Migration Paths
 
-### localStorage → Supabase
+### localStorage → Supabase (Phase 1 → Phase 2)
+
 ```typescript
 // One-time migration script
 const localData = storage.exportData();
@@ -456,8 +386,9 @@ for (const record of history) {
 }
 ```
 
-### Vercel → Cloudflare (if needed)
-1. Copy `/api/core` business logic (already portable)
+### Vercel → Cloudflare (Optional)
+
+1. Copy `/api/core` business logic (portable)
 2. Create Cloudflare Workers wrappers
 3. Update API base URL in frontend
 4. Deploy to Cloudflare Pages + Workers
@@ -465,72 +396,71 @@ for (const record of history) {
 
 ---
 
-## Commands Reference
+## Commands
 
 ```bash
 # Development
 pnpm dev                    # Start dev server
 pnpm build                  # Build for production
-pnpm preview                # Preview production build
+pnpm preview                # Preview build
 
 # Code Quality
 pnpm lint                   # Check code
-pnpm lint:fix               # Fix code issues
+pnpm lint:fix               # Fix issues
 pnpm format                 # Format code
 
 # Database (Phase 2+)
 pnpm db:generate            # Generate migrations
 pnpm db:migrate             # Run migrations
-pnpm db:studio              # Visual database browser
+pnpm db:studio              # Visual DB browser
 
 # Deployment
-vercel                      # Deploy to Vercel
-vercel --prod               # Deploy to production
+vercel                      # Deploy preview
+vercel --prod               # Deploy production
 ```
 
 ---
 
-## Project Status
+## Current Status
 
-### ✅ Completed
-- [x] Project initialization
-- [x] Dependencies installed
-- [x] Configuration files setup
-- [x] Enhancement Workflow UI (with mock data)
-- [x] Beautiful markdown preview
-- [x] Loading states and notifications
+**Phase:** 1 (MVP)
+**Progress:** Day 1 Complete ✅
+**Next:** Core helpers & storage
 
-### 🚧 In Progress
-- [ ] Core helpers (storage, markdown, API client)
-- [ ] Zustand store
-- [ ] Backend API endpoints
+### Completed ✅
+- Project initialization
+- Mantine UI setup
+- Enhancement Workflow UI (mock data)
+- Beautiful markdown preview
+- Loading states & notifications
+- Git repository setup
 
-### 📋 Next Up
-- [ ] Dashboard & Document Management
-- [ ] Real Confluence integration
-- [ ] Change detection & diff viewer
+### In Progress 🚧
+- Core utility helpers
+- localStorage wrapper
+- Zustand store
+
+### Next Up 📋
+- Backend API endpoints
+- Dashboard & document management
+- Real Confluence integration
+- Diff viewer
 
 ---
 
-## Notes
+## Known Limitations
 
-### Why This Approach?
-- **Speed**: Launch in 4-5 days vs 7-8 days
-- **Validation**: Prove concept before building infrastructure
-- **Flexibility**: Easy to add features users actually want
-- **Quality**: Still professional UI and UX
-
-### Known MVP Limitations
-- ⚠️ Data only in one browser
-- ⚠️ Manual download vs auto-push
-- ⚠️ No version tracking
+### MVP (Phase 1)
+- ⚠️ Data only in one browser (localStorage)
+- ⚠️ Manual download (no Notion auto-push)
+- ⚠️ No version tracking (just latest)
 - ⚠️ No multi-device sync
 - ⚠️ ~5-10MB storage limit
+- ⚠️ Single user only
 
-**These are acceptable for validation!** Add features after users prove they want this.
+**These are acceptable for validation!** Features will be added based on user feedback.
 
 ---
 
 **Last Updated:** 2025-12-05
-**Current Phase:** MVP (Day 1 Complete)
-**Next Milestone:** Core helpers & storage (Day 1-2)
+**Current Sprint:** Phase 1 - Day 1 Complete
