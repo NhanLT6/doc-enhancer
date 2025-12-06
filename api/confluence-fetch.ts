@@ -43,12 +43,12 @@ function extractBaseUrl(url: string): string | null {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only allow GET requests
-  if (req.method !== 'GET') {
+  // Allow both GET and POST requests
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { confluenceUrl } = req.query;
+  const confluenceUrl = req.method === 'GET' ? req.query.confluenceUrl : req.body.confluenceUrl;
 
   // Validate input
   if (!confluenceUrl || typeof confluenceUrl !== 'string') {
@@ -73,13 +73,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  // Get credentials from environment
-  const confluenceToken = process.env.CONFLUENCE_TOKEN;
-  const confluenceEmail = process.env.CONFLUENCE_EMAIL;
+  // Get credentials from request body/headers (for user-specific auth) or fallback to environment
+  const confluenceToken =
+    req.method === 'POST'
+      ? req.body.confluenceToken
+      : req.headers['x-confluence-token'] || process.env.CONFLUENCE_TOKEN;
+
+  const confluenceEmail =
+    req.method === 'POST'
+      ? req.body.confluenceEmail
+      : req.headers['x-confluence-email'] || process.env.CONFLUENCE_EMAIL;
 
   if (!confluenceToken) {
-    return res.status(500).json({
-      error: 'Server configuration error: CONFLUENCE_TOKEN not set',
+    return res.status(400).json({
+      error: 'Confluence credentials not provided. Please configure them in Settings.',
     });
   }
 

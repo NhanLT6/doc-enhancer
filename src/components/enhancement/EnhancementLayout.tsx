@@ -1,82 +1,49 @@
-import { Grid } from '@mantine/core';
-import { useState } from 'react';
+import { Flex } from '@mantine/core';
+import { useState, useEffect, useRef } from 'react';
 import { notifications } from '@mantine/notifications';
-import { SourcePanel } from './SourcePanel';
-import { PreviewPanel } from './PreviewPanel';
+import { InlineEnhancementDoc } from './InlineEnhancementDoc';
+import type { DocumentImage } from '@/lib/storage';
 
 interface EnhancementLayoutProps {
   sourceContent: string;
+  images?: DocumentImage[];
   documentName: string;
   mockEnhancedContent?: string;
+  onOpenSidePanel: () => void;
+  onCloseSidePanel: () => void;
 }
 
 export function EnhancementLayout({
   sourceContent,
+  images,
   documentName,
-  mockEnhancedContent,
+  onOpenSidePanel,
+  onCloseSidePanel,
 }: EnhancementLayoutProps) {
-  const [enhancedContent, setEnhancedContent] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [documentContent, setDocumentContent] = useState(sourceContent);
+  const asideRef = useRef<HTMLElement | null>(null);
 
-  const handleGenerate = async (instructions: string) => {
-    setIsLoading(true);
+  useEffect(() => {
+    // Find the AppShell.Aside element
+    const aside = document.querySelector('[data-aside]') as HTMLElement;
+    asideRef.current = aside;
+  }, []);
 
-    // Simulate API call with delay
-    setTimeout(() => {
-      // In production, this would call the API
-      // const result = await enhanceContent(sourceContent, instructions);
-      // setEnhancedContent(result);
-
-      // For now, use mock data
-      setEnhancedContent(mockEnhancedContent || sourceContent);
-      setIsLoading(false);
-
-      notifications.show({
-        title: 'Enhancement Complete',
-        message: 'Your content has been enhanced with AI',
-        color: 'green',
-      });
-    }, 2000);
-  };
-
-  const handleDownload = () => {
-    if (!enhancedContent) return;
-
-    const blob = new Blob([enhancedContent], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${documentName.toLowerCase().replace(/\s+/g, '-')}-enhanced.md`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    notifications.show({
-      title: 'Download Started',
-      message: 'Your enhanced markdown file is downloading',
-      color: 'blue',
-    });
+  const handleContentChange = (newContent: string) => {
+    setDocumentContent(newContent);
   };
 
   return (
-    <Grid gutter="md">
-      <Grid.Col span={{ base: 12, md: 6 }}>
-        <SourcePanel
-          sourceContent={sourceContent}
-          documentName={documentName}
-          onGenerate={handleGenerate}
-          isLoading={isLoading}
-        />
-      </Grid.Col>
-
-      <Grid.Col span={{ base: 12, md: 6 }}>
-        <PreviewPanel
-          enhancedContent={enhancedContent}
-          documentName={documentName}
-          onDownload={handleDownload}
-        />
-      </Grid.Col>
-    </Grid>
+    <Flex h="100%" w="100%">
+      <InlineEnhancementDoc
+        content={documentContent}
+        images={images}
+        documentName={documentName}
+        onContentChange={handleContentChange}
+        sidePanelContainer={asideRef.current}
+        onOpenSidePanel={onOpenSidePanel}
+        onCloseSidePanel={onCloseSidePanel}
+      />
+    </Flex>
   );
 }

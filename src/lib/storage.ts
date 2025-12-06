@@ -3,11 +3,19 @@
  * Provides CRUD operations with TypeScript types
  */
 
+export interface DocumentImage {
+  data: string; // Base64 data URI
+  alt: string;
+  width: number;
+  height: number;
+}
+
 export interface Document {
   id: string;
   name: string;
   confluenceUrl: string;
-  lastFetchedContent: string; // Stored as markdown
+  lastFetchedContent: string; // Stored as markdown with {{IMAGE_N}} placeholders
+  images?: DocumentImage[]; // Extracted images from PDF
   createdAt: string;
   updatedAt: string;
 }

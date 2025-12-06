@@ -232,13 +232,40 @@ CREATE TABLE pending_updates (
 **Goal:** More powerful AI enhancements
 
 ### Features
-- [ ] Style guide management
-  - Create/edit style guides
-  - Organization-wide templates
-  - Apply style guide to enhancements
-- [ ] Partial enhancement
-  - Select specific sections to enhance
-  - Paragraph-level control
+
+**Inline Enhancement (Notion/Google Docs style)**
+- [ ] Text selection with floating menu
+  - **Button 1: Auto Enhance** (instant enhancement like Notion)
+    - Select text → Click "Enhance" → Auto-replace
+    - Show loading indicator inline
+    - Toast notification with Undo option
+  - **Button 2: Custom Prompt** (detailed control like Google Docs)
+    - Opens side panel (AppShell.Aside)
+    - Input field for custom instructions or questions
+    - AI responds with enhanced version
+    - Diff view in side panel
+    - Accept/Reject/Edit manually buttons
+    - Follow-up conversation support
+    - Chat history per selection
+- [ ] **Conversation Markers** (like Google Docs comments)
+  - Save conversation history for each enhancement
+  - Add visual marker/indicator in document
+  - Click marker → Reopen side panel with conversation history
+  - View all enhancements in a list
+  - Filter by date/type
+- [ ] Side panel features
+  - Non-blocking (can read document while open)
+  - Persistent across sessions
+  - Diff viewer for comparing original vs enhanced
+  - Manual text editing in panel
+  - Export conversation history
+
+**Style Guide Management**
+- [ ] Create/edit style guides
+- [ ] Organization-wide templates
+- [ ] Apply style guide to enhancements
+
+**AI Features**
 - [ ] AI confidence scoring
   - Show confidence per section
   - Flag low-confidence suggestions

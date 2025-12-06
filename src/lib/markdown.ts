@@ -103,7 +103,7 @@ export function extractHeadings(markdown: string): Array<{ level: number; text: 
   const headingRegex = /^(#{1,6})\s+(.+)$/gm;
   const headings: Array<{ level: number; text: string }> = [];
 
-  let match;
+  let match: RegExpExecArray | null;
   while ((match = headingRegex.exec(markdown)) !== null) {
     headings.push({
       level: match[1].length,

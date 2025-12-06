@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Container, Title, Text, Button, Grid, Stack, Group, Paper, Center } from '@mantine/core';
-import { IconPlus, IconFileText } from '@tabler/icons-react';
-import { storage, type Document } from '@/lib/storage';
-import { DocumentCard } from '@/components/dashboard/DocumentCard';
+import { Button, Center, Container, Grid, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { IconFileText, IconPlus } from '@tabler/icons-react';
+import { useCallback, useEffect, useState } from 'react';
 import { AddDocumentModal } from '@/components/dashboard/AddDocumentModal';
+import { DocumentCard } from '@/components/dashboard/DocumentCard';
+import { type Document, storage } from '@/lib/storage';
 
 interface DashboardProps {
   onEnhance: (doc: Document) => void;
@@ -13,14 +13,14 @@ export function Dashboard({ onEnhance }: DashboardProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [modalOpened, setModalOpened] = useState(false);
 
-  const loadDocuments = () => {
+  const loadDocuments = useCallback(() => {
     const docs = storage.getDocuments();
     setDocuments(docs);
-  };
+  }, []);
 
   useEffect(() => {
     loadDocuments();
-  }, []);
+  }, [loadDocuments]);
 
   const handleModalSuccess = () => {
     loadDocuments();

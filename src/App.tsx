@@ -1,25 +1,28 @@
-import { useState } from 'react';
 import {
-  AppShell,
-  Container,
-  Title,
-  Text,
-  Group,
   ActionIcon,
-  Breadcrumbs,
   Anchor,
+  AppShell,
+  Breadcrumbs,
+  Container,
+  Group,
+  Text,
+  Title,
+  Tooltip,
 } from '@mantine/core';
-import { IconSparkles, IconHome } from '@tabler/icons-react';
+import { IconHome, IconSettings, IconSparkles } from '@tabler/icons-react';
+import { useState } from 'react';
 import { EnhancementLayout } from './components/enhancement/EnhancementLayout';
-import { Dashboard } from './pages/Dashboard';
-import { mockSourceContent, mockEnhancedContent } from './lib/mockData';
+import { mockSourceContent } from './lib/mockData';
 import type { Document } from './lib/storage';
+import { Dashboard } from './pages/Dashboard';
+import { Settings } from './pages/Settings';
 
-type Page = 'dashboard' | 'enhance';
+type Page = 'dashboard' | 'enhance' | 'settings';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [sidePanelOpened, setSidePanelOpened] = useState(false);
 
   const handleEnhance = (doc: Document) => {
     setSelectedDocument(doc);
@@ -31,9 +34,16 @@ function App() {
     setSelectedDocument(null);
   };
 
+  const handleOpenSettings = () => {
+    setCurrentPage('settings');
+  };
+
   const getBreadcrumbs = () => {
     if (currentPage === 'dashboard') {
       return [{ title: 'Documents', href: '#' }];
+    }
+    if (currentPage === 'settings') {
+      return [{ title: 'Settings', href: '#' }];
     }
     return [
       { title: 'Documents', href: '#', onClick: handleBackToDashboard },
@@ -42,7 +52,15 @@ function App() {
   };
 
   return (
-    <AppShell header={{ height: 70 }} padding="md">
+    <AppShell
+      header={{ height: 70 }}
+      padding={0}
+      aside={{
+        width: 600,
+        breakpoint: 'md',
+        collapsed: { mobile: !sidePanelOpened, desktop: !sidePanelOpened },
+      }}
+    >
       <AppShell.Header>
         <Container size="xl" h="100%">
           <Group h="100%" justify="space-between" px="md">
@@ -74,28 +92,56 @@ function App() {
                 </Breadcrumbs>
               </div>
             </Group>
-            {currentPage === 'dashboard' && (
-              <ActionIcon variant="subtle" onClick={handleBackToDashboard}>
-                <IconHome size={20} />
-              </ActionIcon>
-            )}
+            <Group gap="xs">
+              {currentPage !== 'dashboard' && (
+                <Tooltip label="Home">
+                  <ActionIcon variant="subtle" onClick={handleBackToDashboard}>
+                    <IconHome size={20} />
+                  </ActionIcon>
+                </Tooltip>
+              )}
+              <Tooltip label="Settings">
+                <ActionIcon variant="subtle" onClick={handleOpenSettings}>
+                  <IconSettings size={20} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
           </Group>
         </Container>
       </AppShell.Header>
 
-      <AppShell.Main>
-        {currentPage === 'dashboard' && <Dashboard onEnhance={handleEnhance} />}
+      <AppShell.Main style={{ height: 'calc(100vh)' }}>
+        {currentPage === 'dashboard' && (
+          <div style={{ height: '100%', padding: 'var(--mantine-spacing-md)', overflow: 'auto' }}>
+            <Dashboard onEnhance={handleEnhance} />
+          </div>
+        )}
+
+        {currentPage === 'settings' && (
+          <div style={{ height: '100%', overflow: 'auto' }}>
+            <Settings />
+          </div>
+        )}
 
         {currentPage === 'enhance' && selectedDocument && (
-          <Container size="xl">
+          <Container size="xl" h="100%" p="md" style={{ display: 'flex', flexDirection: 'column' }}>
             <EnhancementLayout
               sourceContent={selectedDocument.lastFetchedContent || mockSourceContent}
+              images={selectedDocument.images}
               documentName={selectedDocument.name}
-              mockEnhancedContent={mockEnhancedContent}
+              onOpenSidePanel={() => setSidePanelOpened(true)}
+              onCloseSidePanel={() => setSidePanelOpened(false)}
             />
           </Container>
         )}
       </AppShell.Main>
+
+      {/* Side Panel for Enhancement */}
+      {currentPage === 'enhance' && (
+        <AppShell.Aside p={0} data-aside="enhancement">
+          {/* Side panel content will be rendered by EnhancementLayout via portal */}
+        </AppShell.Aside>
+      )}
     </AppShell>
   );
 }

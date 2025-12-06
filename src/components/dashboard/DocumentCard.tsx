@@ -6,6 +6,7 @@ import {
   IconTrash,
   IconExternalLink,
 } from '@tabler/icons-react';
+import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import type { Document } from '@/lib/storage';
 import { storage } from '@/lib/storage';
@@ -18,24 +19,36 @@ interface DocumentCardProps {
 
 export function DocumentCard({ document, onEnhance, onRefresh }: DocumentCardProps) {
   const handleDelete = () => {
-    if (window.confirm(`Are you sure you want to delete "${document.name}"?`)) {
-      const success = storage.deleteDocument(document.id);
+    modals.openConfirmModal({
+      title: 'Delete Document',
+      centered: true,
+      children: (
+        <Text size="sm">
+          Are you sure you want to delete <strong>"{document.name}"</strong>? This action cannot be
+          undone.
+        </Text>
+      ),
+      labels: { confirm: 'Delete', cancel: 'Cancel' },
+      confirmProps: { color: 'red' },
+      onConfirm: () => {
+        const success = storage.deleteDocument(document.id);
 
-      if (success) {
-        notifications.show({
-          title: 'Document Deleted',
-          message: `"${document.name}" has been deleted`,
-          color: 'blue',
-        });
-        onRefresh();
-      } else {
-        notifications.show({
-          title: 'Error',
-          message: 'Failed to delete document',
-          color: 'red',
-        });
-      }
-    }
+        if (success) {
+          notifications.show({
+            title: 'Document Deleted',
+            message: `"${document.name}" has been deleted`,
+            color: 'blue',
+          });
+          onRefresh();
+        } else {
+          notifications.show({
+            title: 'Error',
+            message: 'Failed to delete document',
+            color: 'red',
+          });
+        }
+      },
+    });
   };
 
   const handleOpenConfluence = () => {

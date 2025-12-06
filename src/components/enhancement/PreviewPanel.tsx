@@ -1,6 +1,8 @@
-import { Card, Text, Button, Stack, Paper, Badge, Center } from '@mantine/core';
+import { Card, Text, Button, Stack, Paper, Badge, Center, Group } from '@mantine/core';
 import { IconDownload, IconSparkles } from '@tabler/icons-react';
+import { useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { TextSelectionAction } from './TextSelectionAction';
 
 interface PreviewPanelProps {
   enhancedContent: string | null;
@@ -9,30 +11,43 @@ interface PreviewPanelProps {
 }
 
 export function PreviewPanel({ enhancedContent, documentName, onDownload }: PreviewPanelProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder h="100%">
-      <Stack gap="md">
-        <div>
-          <Text size="lg" fw={700}>
-            Enhanced Version
-          </Text>
-          <Text size="sm" c="dimmed">
-            AI-enhanced documentation
-          </Text>
-          {enhancedContent && (
-            <Badge color="green" variant="light" mt="xs">
-              Ready to download
-            </Badge>
-          )}
-        </div>
+    <>
+      <TextSelectionAction containerRef={contentRef} />
+    <Card shadow="sm" padding="lg" radius="md" withBorder h="100%" w="100%" style={{ display: 'flex', flexDirection: 'column' }}>
+      <Stack gap="md" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Group justify="space-between" align="flex-start" style={{ flexShrink: 0 }}>
+          <div>
+            <Text size="lg" fw={700}>
+              Enhanced Version
+            </Text>
+            <Text size="sm" c="dimmed">
+              AI-enhanced documentation
+            </Text>
+          </div>
+          <Button
+            leftSection={<IconDownload size={16} />}
+            color="green"
+            size="sm"
+            variant="light"
+            onClick={onDownload}
+            disabled={!enhancedContent}
+          >
+            Download as .md
+          </Button>
+        </Group>
 
         <Paper
+          ref={contentRef}
           p="md"
           withBorder
           style={{
             backgroundColor: 'var(--mantine-color-gray-0)',
-            maxHeight: '500px',
+            flex: 1,
             overflowY: 'auto',
+            minHeight: 0,
           }}
         >
           {enhancedContent ? (
@@ -158,18 +173,8 @@ export function PreviewPanel({ enhancedContent, documentName, onDownload }: Prev
             </Center>
           )}
         </Paper>
-
-        <Button
-          leftSection={<IconDownload size={18} />}
-          color="green"
-          size="md"
-          fullWidth
-          onClick={onDownload}
-          disabled={!enhancedContent}
-        >
-          Download as .md
-        </Button>
       </Stack>
     </Card>
+    </>
   );
 }

@@ -1,20 +1,84 @@
 /**
- * Vercel Function: Enhance content using Gemini AI
+ * Vercel Function: Enhance selected text using Gemini AI
  * Endpoint: POST /api/enhance-content
+ *
+ * Strategy: "Marked Local Context"
+ * - Sends full document for global context (cacheable)
+ * - Sends paragraph with <target> tags for precise selection
+ * - AI can expand selection for grammatical completeness
  */
 
+import { google } from '@ai-sdk/google';
+import { generateText } from 'ai';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { z } from 'zod';
 
-interface EnhanceRequest {
-  content: string; // Markdown content to enhance
-  instructions?: string; // Optional user instructions
-  documentName?: string; // Optional document name for context
+// ========== Request/Response Schemas ==========
+
+const requestSchema = z.object({
+  fullDocument: z.string().min(1, 'Full document is required'),
+  paragraphWithSelection: z.string().min(1, 'Paragraph with selection is required'),
+  selectedText: z.string().min(1, 'Selected text is required'),
+  instructions: z.string().optional(),
+  documentName: z.string().optional(),
+});
+
+const responseSchema = z.object({
+  originalTextToReplace: z.string(),
+  newText: z.string(),
+  model: z.string(),
+});
+
+type EnhanceRequest = z.infer<typeof requestSchema>;
+type EnhanceResponse = z.infer<typeof responseSchema>;
+
+// ========== System Prompt ==========
+
+const SYSTEM_PROMPT = `You are a professional technical writing assistant. Your role is to enhance selected text while maintaining consistency with the full document.
+
+Core Principles:
+1. **Maintain Consistency**: Match the terminology, tone, and style of the full document
+2. **Context Awareness**: Consider what comes before and after the selection
+3. **Smart Expansion**: If the selected text is grammatically incomplete, expand to include necessary surrounding words
+4. **Preserve Intent**: Keep the original meaning while improving clarity and professionalism
+
+Enhancement Guidelines:
+- Improve clarity and conciseness
+- Fix grammar and punctuation
+- Use active voice when appropriate
+- Add specific details where vague
+- Maintain technical accuracy
+- Keep formatting (markdown, lists, etc.)`;
+
+// ========== User Prompt Template ==========
+
+function buildUserPrompt(
+  paragraphWithSelection: string,
+  instructions?: string
+): string {
+  return `I need to enhance a specific part of my document.
+
+**Context**: Below is the paragraph containing my selection. The text I selected is wrapped in <target> tags.
+
+**Current Paragraph**:
+${paragraphWithSelection}
+
+**Task**:
+1. Analyze the text inside <target> tags
+2. If the selection is grammatically incomplete or breaks sentence flow, expand to include necessary surrounding words
+3. Enhance the text (improve clarity, grammar, professionalism)
+${instructions ? `4. Follow this specific instruction: ${instructions}` : ''}
+
+**CRITICAL**: Return your response as a JSON object with this EXACT format:
+{
+  "original_text_to_replace": "The exact string from the paragraph to replace (may be longer than <target> if you expanded)",
+  "new_text": "The enhanced version"
 }
 
-interface EnhanceResponse {
-  enhancedContent: string; // Enhanced markdown
-  model: string; // Model used
+Output ONLY the JSON object, nothing else.`;
 }
+
+// ========== Handler ==========
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only allow POST requests
@@ -22,133 +86,96 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { content, instructions, documentName } = req.body as EnhanceRequest;
-
-  // Validate input
-  if (!content || typeof content !== 'string') {
+  // Validate request body
+  const validation = requestSchema.safeParse(req.body);
+  if (!validation.success) {
     return res.status(400).json({
-      error: 'Missing or invalid content parameter',
+      error: 'Invalid request',
+      details: validation.error.errors,
     });
   }
 
-  if (content.trim().length === 0) {
-    return res.status(400).json({
-      error: 'Content cannot be empty',
-    });
-  }
-
-  // Get API key from environment
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    return res.status(500).json({
-      error: 'Server configuration error: GEMINI_API_KEY not set',
-    });
-  }
+  const {
+    fullDocument,
+    paragraphWithSelection,
+    selectedText,
+    instructions,
+    documentName,
+  } = validation.data;
 
   try {
-    // Build prompt for Gemini
-    const systemPrompt = `You are a technical documentation enhancement assistant. Your task is to improve technical documentation by:
+    console.log(`Enhancing text in: ${documentName || 'Untitled'}`);
+    console.log(`Selected text: "${selectedText.substring(0, 50)}..."`);
 
-1. Adding implementation details and code examples where appropriate
-2. Clarifying technical concepts and terminology
-3. Improving structure and readability
-4. Adding best practices and recommendations
-5. Maintaining professional technical writing style
+    // Prepare system message with full document context
+    const systemMessage = `${SYSTEM_PROMPT}
 
-Important guidelines:
-- Keep the same overall structure and organization
-- Output ONLY in Markdown format
-- Be concise but thorough
-- Focus on practical, actionable information
-- Add code examples in appropriate language with syntax highlighting
-- Use tables for comparing options when relevant
-- Add notes/warnings for important considerations
+**Full Document Context** (for reference only, do NOT modify this):
+${fullDocument}
 
-${documentName ? `Document name: "${documentName}"` : ''}
-${instructions ? `\nUser instructions:\n${instructions}` : ''}`;
+${documentName ? `\nDocument Name: "${documentName}"` : ''}`;
 
-    const userPrompt = `Please enhance the following technical documentation:
+    // Build user message with marked selection
+    const userMessage = buildUserPrompt(paragraphWithSelection, instructions);
 
-${content}`;
-
-    // Call Gemini API
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
-
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `${systemPrompt}\n\n${userPrompt}`,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 8192,
-          topP: 0.95,
-          topK: 40,
-        },
-        safetySettings: [
-          {
-            category: 'HARM_CATEGORY_HARASSMENT',
-            threshold: 'BLOCK_NONE',
-          },
-          {
-            category: 'HARM_CATEGORY_HATE_SPEECH',
-            threshold: 'BLOCK_NONE',
-          },
-          {
-            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-            threshold: 'BLOCK_NONE',
-          },
-          {
-            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-            threshold: 'BLOCK_NONE',
-          },
-        ],
+    // Generate enhanced text using Gemini
+    const { text } = await generateText({
+      model: google('gemini-2.0-flash-exp', {
+        // Enable caching for the system message (full document context)
+        // This reduces cost and latency for repeated requests on same document
+        cacheControl: true,
       }),
+      messages: [
+        {
+          role: 'system',
+          content: systemMessage,
+        },
+        {
+          role: 'user',
+          content: userMessage,
+        },
+      ],
+      temperature: 0.3, // Lower temperature for more consistent output
     });
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error('Gemini API error:', geminiResponse.status, errorText);
-
-      if (geminiResponse.status === 429) {
-        return res.status(429).json({
-          error: 'Rate limit exceeded. Please try again later.',
-        });
-      }
-
-      return res.status(geminiResponse.status).json({
-        error: `Gemini API error: ${geminiResponse.statusText}`,
-      });
-    }
-
-    const data = await geminiResponse.json();
-
-    // Extract enhanced content
-    const enhancedContent = data.candidates?.[0]?.content?.parts?.[0]?.text || content;
-
-    if (!enhancedContent) {
+    if (!text || text.trim().length === 0) {
       return res.status(500).json({
         error: 'No content generated by AI',
       });
     }
 
-    const result: EnhanceResponse = {
-      enhancedContent,
-      model: 'gemini-2.0-flash-exp',
-    };
+    // Parse JSON response from AI
+    let parsedResponse;
+    try {
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/\{[\s\S]*\}/);
+      const jsonText = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : text;
+      parsedResponse = JSON.parse(jsonText.trim());
+    } catch (parseError) {
+      console.error('Failed to parse AI response as JSON:', text);
+      return res.status(500).json({
+        error: 'AI returned invalid JSON format',
+        details: text.substring(0, 200),
+      });
+    }
 
-    return res.status(200).json(result);
+    // Validate response structure
+    const result = responseSchema.safeParse({
+      originalTextToReplace: parsedResponse.original_text_to_replace,
+      newText: parsedResponse.new_text,
+      model: 'gemini-2.0-flash-exp',
+    });
+
+    if (!result.success) {
+      return res.status(500).json({
+        error: 'AI response missing required fields',
+        details: result.error.errors,
+      });
+    }
+
+    console.log(`Enhanced successfully. Original: "${result.data.originalTextToReplace.substring(0, 50)}..."`);
+
+    return res.status(200).json(result.data);
   } catch (error) {
     console.error('Failed to enhance content:', error);
     return res.status(500).json({
