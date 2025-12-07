@@ -2,7 +2,7 @@
  * API client for calling backend Vercel functions
  */
 
-import type { DocumentImage } from './storage';
+import type { DocumentMetadata } from './storage';
 
 export interface ConfluenceResponse {
   content: string; // HTML content
@@ -12,16 +12,16 @@ export interface ConfluenceResponse {
 }
 
 export interface EnhanceRequest {
-  fullDocument: string;
-  paragraphWithSelection: string;
-  selectedText: string;
+  fullDocumentHtml: string;
+  targetBlockHtml: string;
   instructions?: string;
   documentName?: string;
+  metadata?: DocumentMetadata;
 }
 
 export interface EnhanceResponse {
-  originalTextToReplace: string;
-  newText: string;
+  action: 'replace';
+  newHtml: string;
   model: string;
 }
 
@@ -30,11 +30,19 @@ export interface ApiError {
   details?: string;
 }
 
-export interface PdfToMarkdownResponse {
-  markdown: string;
-  images: DocumentImage[];
-  model: string;
+export interface PdfToHtmlResponse {
+  html: string;
   imageCount: number;
+  model: string;
+}
+
+export interface AnalyzeDocumentRequest {
+  fullDocumentHtml: string;
+  documentName?: string;
+}
+
+export interface AnalyzeDocumentResponse extends DocumentMetadata {
+  model: string;
 }
 
 /**
@@ -68,8 +76,9 @@ export async function fetchFromConfluence(
 }
 
 /**
- * Enhance selected text using "Marked Local Context" strategy
- * Sends full document + paragraph with <target> tags
+ * Enhance selected text using "Marked Local Context" strategy with HTML
+ * Sends full document HTML + parent node HTML with <target> tags
+ * Preserves HTML structure (tables, lists, formatting)
  */
 export async function enhanceContent(request: EnhanceRequest): Promise<EnhanceResponse> {
   const response = await fetch('/api/enhance-content', {
@@ -105,16 +114,14 @@ async function fileToBase64(file: File): Promise<string> {
 }
 
 /**
- * Convert PDF to Markdown using Gemini AI via our API
- * Returns markdown with {{IMAGE_N}} placeholders and images array
+ * Convert PDF to HTML using Gemini AI via our API
+ * Returns HTML with images embedded as <img> tags with base64 data URIs
  */
-export async function convertPdfToMarkdown(
-  file: File
-): Promise<{ markdown: string; images: DocumentImage[] }> {
+export async function convertPdfToHtml(file: File): Promise<{ html: string; imageCount: number }> {
   // Convert file to base64
   const fileData = await fileToBase64(file);
 
-  const response = await fetch('/api/pdf-to-markdown', {
+  const response = await fetch('/api/pdf-to-html', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -127,13 +134,13 @@ export async function convertPdfToMarkdown(
 
   if (!response.ok) {
     const error: ApiError = await response.json();
-    throw new Error(error.error || 'Failed to convert PDF to markdown');
+    throw new Error(error.error || 'Failed to convert PDF to HTML');
   }
 
-  const data: PdfToMarkdownResponse = await response.json();
+  const data: PdfToHtmlResponse = await response.json();
   return {
-    markdown: data.markdown,
-    images: data.images,
+    html: data.html,
+    imageCount: data.imageCount,
   };
 }
 
@@ -194,5 +201,36 @@ export function extractParagraphWithSelection(
   return {
     paragraphWithSelection,
     selectedText,
+  };
+}
+
+/**
+ * Analyze document and extract metadata using Gemini AI
+ * Returns summary, style guide, key terms, and document type
+ */
+export async function analyzeDocument(
+  request: AnalyzeDocumentRequest
+): Promise<DocumentMetadata> {
+  const response = await fetch('/api/analyze-document', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error: ApiError = await response.json();
+    throw new Error(error.error || 'Failed to analyze document');
+  }
+
+  const data: AnalyzeDocumentResponse = await response.json();
+
+  // Return just the metadata, without the model field
+  return {
+    summary: data.summary,
+    styleGuide: data.styleGuide,
+    keyTerms: data.keyTerms,
+    documentType: data.documentType,
   };
 }

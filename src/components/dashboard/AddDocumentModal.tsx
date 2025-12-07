@@ -11,8 +11,16 @@ import {
 import { zod4Resolver } from 'mantine-form-zod-resolver';
 import { useState } from 'react';
 import { z } from 'zod';
-import { convertPdfToMarkdown, fetchFromConfluence } from '@/lib/api-client';
-import { htmlToMarkdown } from '@/lib/markdown';
+import {
+  analyzeDocument,
+  convertPdfToHtml,
+  fetchFromConfluence,
+} from '@/lib/api-client';
+import {
+  htmlToTiptapJson,
+  markdownToHtml,
+  plainTextToHtml,
+} from '@/lib/content-converters';
 import { getSettings } from '@/lib/settings';
 import { storage } from '@/lib/storage';
 
@@ -40,7 +48,7 @@ const fileSchema = z.object({
 
 export function AddDocumentModal({ opened, onClose, onSuccess }: AddDocumentModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<string | null>('confluence');
+  const [activeTab, setActiveTab] = useState<string | null>('file');
 
   const confluenceForm = useForm({
     initialValues: {
@@ -87,25 +95,42 @@ export function AddDocumentModal({ opened, onClose, onSuccess }: AddDocumentModa
     setIsLoading(true);
 
     try {
-      // Fetch content from Confluence
+      // Fetch content from Confluence (returns sanitized HTML)
       const confluenceData = await fetchFromConfluence(values.confluenceUrl, {
         confluenceToken: settings.confluenceToken,
         confluenceEmail: settings.confluenceEmail,
       });
 
-      // Convert HTML to Markdown
-      const markdownContent = htmlToMarkdown(confluenceData.content);
+      const documentName = values.name || confluenceData.title;
+      const htmlContent = confluenceData.content;
 
-      // Save document with fetched content
+      // Convert HTML to Tiptap JSON
+      const tiptapJson = htmlToTiptapJson(htmlContent);
+
+      // Analyze document to extract metadata (async, don't block save)
+      let metadata;
+      try {
+        metadata = await analyzeDocument({
+          fullDocumentHtml: htmlContent,
+          documentName,
+        });
+        console.log('Document metadata extracted:', metadata);
+      } catch (metadataError) {
+        console.warn('Failed to extract metadata, continuing without it:', metadataError);
+        // Continue saving without metadata if analysis fails
+      }
+
+      // Save document with Tiptap JSON content and metadata
       storage.addDocument({
-        name: values.name || confluenceData.title,
+        name: documentName,
         confluenceUrl: values.confluenceUrl,
-        lastFetchedContent: markdownContent,
+        content: tiptapJson,
+        metadata,
       });
 
       notifications.show({
         title: 'Success',
-        message: `Document "${confluenceData.title}" added successfully`,
+        message: `Document "${documentName}" added successfully${metadata ? ' with AI-generated metadata' : ''}`,
         color: 'green',
       });
 
@@ -138,20 +163,22 @@ export function AddDocumentModal({ opened, onClose, onSuccess }: AddDocumentModa
     setIsLoading(true);
 
     try {
-      let content: string;
-      let images: import('@/lib/storage').DocumentImage[] | undefined;
+      let htmlContent: string;
+      let imageCount = 0;
+
+      const documentName = values.name || values.file.name.replace(/\.(txt|md|pdf)$/i, '');
 
       // Handle different file types
       if (values.file.type === 'application/pdf' || values.file.name.endsWith('.pdf')) {
-        // Convert PDF to markdown using Gemini API
+        // Convert PDF to HTML using Gemini API
         try {
-          const result = await convertPdfToMarkdown(values.file);
-          content = result.markdown;
-          images = result.images;
+          const result = await convertPdfToHtml(values.file);
+          htmlContent = result.html;
+          imageCount = result.imageCount;
 
           notifications.show({
             title: 'PDF Converted',
-            message: `PDF converted successfully (${images.length} images extracted)`,
+            message: `PDF converted successfully (${imageCount} images embedded)`,
             color: 'green',
           });
         } catch (pdfError) {
@@ -164,25 +191,43 @@ export function AddDocumentModal({ opened, onClose, onSuccess }: AddDocumentModa
           setIsLoading(false);
           return;
         }
+      } else if (values.file.name.endsWith('.md')) {
+        // Read markdown file and convert to HTML
+        const markdownContent = await values.file.text();
+        htmlContent = markdownToHtml(markdownContent);
       } else {
-        // Read text file content
-        content = await values.file.text();
+        // Read plain text file and convert to HTML
+        const textContent = await values.file.text();
+        htmlContent = plainTextToHtml(textContent);
       }
 
-      // Use filename without extension as fallback if name is not provided
-      const documentName = values.name || values.file.name.replace(/\.(txt|md|pdf)$/i, '');
+      // Convert HTML to Tiptap JSON
+      const tiptapJson = htmlToTiptapJson(htmlContent);
 
-      // Save document with file content and images (if any)
+      // Analyze document to extract metadata (async, don't block save)
+      let metadata;
+      try {
+        metadata = await analyzeDocument({
+          fullDocumentHtml: htmlContent,
+          documentName,
+        });
+        console.log('Document metadata extracted:', metadata);
+      } catch (metadataError) {
+        console.warn('Failed to extract metadata, continuing without it:', metadataError);
+        // Continue saving without metadata if analysis fails
+      }
+
+      // Save document with Tiptap JSON content and metadata
       storage.addDocument({
         name: documentName,
         confluenceUrl: '', // No Confluence URL for local files
-        lastFetchedContent: content,
-        images,
+        content: tiptapJson,
+        metadata,
       });
 
       notifications.show({
         title: 'Success',
-        message: `Document "${documentName}" added successfully`,
+        message: `Document "${documentName}" added successfully${metadata ? ' with AI-generated metadata' : ''}`,
         color: 'green',
       });
 
@@ -207,11 +252,11 @@ export function AddDocumentModal({ opened, onClose, onSuccess }: AddDocumentModa
     <Modal opened={opened} onClose={onClose} title="Add New Document" size="md">
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
-          <Tabs.Tab value="confluence" leftSection={<IconCloud size={16} />}>
-            From Confluence
-          </Tabs.Tab>
           <Tabs.Tab value="file" leftSection={<IconFileText size={16} />}>
             From File
+          </Tabs.Tab>
+          <Tabs.Tab value="confluence" leftSection={<IconCloud size={16} />}>
+            From Confluence
           </Tabs.Tab>
         </Tabs.List>
 

@@ -10,12 +10,25 @@ export interface DocumentImage {
   height: number;
 }
 
+export interface DocumentMetadata {
+  summary: string; // 3-5 sentence summary of the document
+  styleGuide: {
+    tone: string; // e.g., "formal technical", "conversational", "academic"
+    vocabulary: string[]; // 10-15 domain-specific terms used consistently
+    perspective: string; // "first-person", "third-person", "imperative"
+    technicalLevel: string; // "beginner", "intermediate", "expert"
+    commonPatterns: string[]; // Recurring sentence structures or phrases
+  };
+  keyTerms: string[]; // Important technical terms, product names, acronyms to preserve
+  documentType: string; // e.g., "API documentation", "user guide", "technical specification"
+}
+
 export interface Document {
   id: string;
   name: string;
   confluenceUrl: string;
-  lastFetchedContent: string; // Stored as markdown with {{IMAGE_N}} placeholders
-  images?: DocumentImage[]; // Extracted images from PDF
+  content: any; // Tiptap JSON format - stores rich content with embedded images
+  metadata?: DocumentMetadata; // AI-generated metadata for context-aware enhancements
   createdAt: string;
   updatedAt: string;
 }
@@ -23,8 +36,8 @@ export interface Document {
 export interface EnhancementRecord {
   id: string;
   documentId: string;
-  originalContent: string;
-  enhancedContent: string;
+  originalContent: any; // Tiptap JSON
+  enhancedContent: any; // Tiptap JSON
   instructions: string;
   createdAt: string;
 }

@@ -56,13 +56,23 @@ export function DocumentCard({ document, onEnhance, onRefresh }: DocumentCardPro
   };
 
   const getStatusBadge = () => {
-    if (!document.lastFetchedContent) {
+    if (!document.content) {
       return (
         <Badge color="gray" variant="light">
-          Not Fetched
+          Not Loaded
         </Badge>
       );
     }
+
+    // Show metadata badge if available
+    if (document.metadata) {
+      return (
+        <Badge color="blue" variant="light">
+          Ready (AI Analyzed)
+        </Badge>
+      );
+    }
+
     return (
       <Badge color="green" variant="light">
         Ready
@@ -143,7 +153,7 @@ export function DocumentCard({ document, onEnhance, onRefresh }: DocumentCardPro
             size="sm"
             flex={1}
             onClick={() => onEnhance(document)}
-            disabled={!document.lastFetchedContent}
+            disabled={!document.content}
           >
             Enhance
           </Button>

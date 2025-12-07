@@ -5,19 +5,18 @@ import {
   Breadcrumbs,
   Container,
   Group,
-  Text,
   Title,
   Tooltip,
 } from '@mantine/core';
-import { IconHome, IconSettings, IconSparkles } from '@tabler/icons-react';
+import { IconHome, IconSettings, IconSparkles, IconFlask } from '@tabler/icons-react';
 import { useState } from 'react';
-import { EnhancementLayout } from './components/enhancement/EnhancementLayout';
-import { mockSourceContent } from './lib/mockData';
+import { DocumentEnhancement } from './components/enhancement/DocumentEnhancement';
 import type { Document } from './lib/storage';
 import { Dashboard } from './pages/Dashboard';
 import { Settings } from './pages/Settings';
+import { TiptapTest } from './pages/TiptapTest';
 
-type Page = 'dashboard' | 'enhance' | 'settings';
+type Page = 'dashboard' | 'enhance' | 'settings' | 'tiptap-test';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -44,6 +43,9 @@ function App() {
     }
     if (currentPage === 'settings') {
       return [{ title: 'Settings', href: '#' }];
+    }
+    if (currentPage === 'tiptap-test') {
+      return [{ title: 'Tiptap Test', href: '#' }];
     }
     return [
       { title: 'Documents', href: '#', onClick: handleBackToDashboard },
@@ -100,6 +102,15 @@ function App() {
                   </ActionIcon>
                 </Tooltip>
               )}
+              <Tooltip label="Tiptap Test (Phase 1)">
+                <ActionIcon
+                  variant="subtle"
+                  color="orange"
+                  onClick={() => setCurrentPage('tiptap-test')}
+                >
+                  <IconFlask size={20} />
+                </ActionIcon>
+              </Tooltip>
               <Tooltip label="Settings">
                 <ActionIcon variant="subtle" onClick={handleOpenSettings}>
                   <IconSettings size={20} />
@@ -123,12 +134,18 @@ function App() {
           </div>
         )}
 
+        {currentPage === 'tiptap-test' && (
+          <div style={{ height: '100%', overflow: 'auto' }}>
+            <TiptapTest />
+          </div>
+        )}
+
         {currentPage === 'enhance' && selectedDocument && (
           <Container size="xl" h="100%" p="md" style={{ display: 'flex', flexDirection: 'column' }}>
-            <EnhancementLayout
-              sourceContent={selectedDocument.lastFetchedContent || mockSourceContent}
-              images={selectedDocument.images}
+            <DocumentEnhancement
+              contentJson={selectedDocument.content}
               documentName={selectedDocument.name}
+              documentMetadata={selectedDocument.metadata}
               onOpenSidePanel={() => setSidePanelOpened(true)}
               onCloseSidePanel={() => setSidePanelOpened(false)}
             />

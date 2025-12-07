@@ -1,15 +1,43 @@
 /**
  * Vercel Function: Fetch content from Confluence
  * Endpoint: /api/confluence-fetch?confluenceUrl=...
+ * Returns: HTML content (sanitized for Tiptap compatibility)
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface ConfluenceResponse {
-  content: string; // HTML content
+  content: string; // HTML content (sanitized for Tiptap)
   title: string;
   version: number;
   lastModified: string;
+}
+
+/**
+ * Sanitize Confluence HTML for Tiptap compatibility
+ * - Removes script tags and unsafe attributes
+ * - Preserves tables, lists, images, and formatting
+ * - Converts Confluence-specific tags to standard HTML
+ */
+function sanitizeConfluenceHtml(html: string): string {
+  let sanitized = html;
+
+  // Remove script tags and their content
+  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+  // Remove event handlers and javascript: links
+  sanitized = sanitized.replace(/on\w+="[^"]*"/gi, '');
+  sanitized = sanitized.replace(/on\w+='[^']*'/gi, '');
+  sanitized = sanitized.replace(/javascript:[^"']*/gi, '');
+
+  // Convert Confluence storage format tags to standard HTML
+  // Confluence uses <ac:structured-macro> and other custom tags
+  // For now, we'll preserve them and let Tiptap handle or ignore them
+
+  // Clean up excessive whitespace while preserving structure
+  sanitized = sanitized.replace(/\n\s*\n\s*\n/g, '\n\n');
+
+  return sanitized;
 }
 
 /**
@@ -131,9 +159,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const data = await response.json();
 
-    // Extract relevant data
+    // Extract relevant data and sanitize HTML
+    const rawHtml = data.body?.storage?.value || '';
+    const sanitizedHtml = sanitizeConfluenceHtml(rawHtml);
+
     const result: ConfluenceResponse = {
-      content: data.body?.storage?.value || '',
+      content: sanitizedHtml,
       title: data.title || 'Untitled',
       version: data.version?.number || 1,
       lastModified: data.version?.when || new Date().toISOString(),

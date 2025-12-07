@@ -16,10 +16,10 @@ import { useState } from 'react';
 import ReactDiffViewer from 'react-diff-viewer-continued';
 import { enhanceContent } from '@/lib/api-client';
 import { notifications } from '@mantine/notifications';
+import type { DocumentMetadata } from '@/lib/storage';
 
 interface Enhancement {
-  originalTextToReplace: string; // May be longer than selection if AI expanded
-  enhanced: string;
+  enhancedHtml: string; // Enhanced HTML from API
   prompt?: string;
 }
 
@@ -28,6 +28,7 @@ interface EnhancementSidePanelProps {
   paragraphWithSelection: string;
   selectedText: string;
   documentName?: string;
+  documentMetadata?: DocumentMetadata;
   onClose: () => void;
   onAccept: (originalText: string, enhancedText: string) => void;
   onReject: () => void;
@@ -38,6 +39,7 @@ export function EnhancementSidePanel({
   paragraphWithSelection,
   selectedText,
   documentName,
+  documentMetadata,
   onClose,
   onAccept,
   onReject,
@@ -59,11 +61,11 @@ export function EnhancementSidePanel({
 
     try {
       const result = await enhanceContent({
-        fullDocument,
-        paragraphWithSelection,
-        selectedText,
+        fullDocumentHtml: fullDocument,
+        targetBlockHtml: paragraphWithSelection,
         instructions: prompt,
         documentName,
+        metadata: documentMetadata,
       });
 
       // Add AI response to history
@@ -73,8 +75,7 @@ export function EnhancementSidePanel({
       ]);
 
       setEnhancement({
-        originalTextToReplace: result.originalTextToReplace,
-        enhanced: result.newText,
+        enhancedHtml: result.newHtml,
         prompt,
       });
 
@@ -93,7 +94,7 @@ export function EnhancementSidePanel({
 
   const handleAccept = () => {
     if (enhancement) {
-      onAccept(enhancement.originalTextToReplace, enhancement.enhanced);
+      onAccept(selectedText, enhancement.enhancedHtml);
       onClose();
     }
   };
@@ -163,8 +164,8 @@ export function EnhancementSidePanel({
                   {isLastAIMessage && (
                     <div style={{ marginTop: '0.5rem' }}>
                       <ReactDiffViewer
-                        oldValue={enhancement.originalTextToReplace}
-                        newValue={enhancement.enhanced}
+                        oldValue={paragraphWithSelection.replace(/<target>|<\/target>/g, '')}
+                        newValue={enhancement.enhancedHtml}
                         splitView={false}
                         useDarkTheme={false}
                         hideLineNumbers
